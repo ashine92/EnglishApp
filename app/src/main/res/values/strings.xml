@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Vocab App</string>
+    <string name="home">Trang chủ</string>
+    <string name="search">Tra từ</string>
+    <string name="vocabulary">Từ vựng</string>
+    <string name="test">Kiểm tra</string>
+</resources>
