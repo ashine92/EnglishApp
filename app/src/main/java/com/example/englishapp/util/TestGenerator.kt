@@ -50,7 +50,7 @@ object TestGenerator {
                     "_____"
                 )
             } else {
-                "${vocab.meaning}. Example: _____"
+                "Điền từ phù hợp: _____ (${vocab.meaning})"
             }
 
             TestQuestion.FillBlank(
@@ -66,18 +66,27 @@ object TestGenerator {
         vocabs: List<Vocabulary>,
         pairsCount: Int = 5
     ): List<TestQuestion.Matching> {
-        val selectedVocabs = vocabs.shuffled().take(pairsCount)
-
-        val pairs = selectedVocabs.map { vocab ->
-            vocab.word to vocab.meaning
-        }
-
-        return listOf(
+        val questionsCount = (vocabs.size / pairsCount).coerceAtLeast(1)
+        val shuffledVocabs = vocabs.shuffled()
+        
+        return (0 until questionsCount).mapNotNull { questionIndex ->
+            val startIndex = questionIndex * pairsCount
+            val endIndex = (startIndex + pairsCount).coerceAtMost(shuffledVocabs.size)
+            
+            if (startIndex >= shuffledVocabs.size) return@mapNotNull null
+            
+            val selectedVocabs = shuffledVocabs.subList(startIndex, endIndex)
+            if (selectedVocabs.isEmpty()) return@mapNotNull null
+            
+            val pairs = selectedVocabs.map { vocab ->
+                vocab.word to vocab.meaning
+            }
+            
             TestQuestion.Matching(
-                id = "match_0",
+                id = "match_$questionIndex",
                 vocab = selectedVocabs.first(),
                 pairs = pairs.shuffled()
             )
-        )
+        }
     }
 }
