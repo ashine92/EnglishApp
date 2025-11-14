@@ -32,6 +32,9 @@ fun NavGraph() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+    
+    // Ẩn bottom bar khi đang ở Test screen
+    val shouldShowBottomBar = currentDestination?.route != Screen.Test.route
 
     // Ẩn bottom bar khi ở Test screen hoặc Flashcard study screen
     val shouldShowBottomBar = currentDestination?.route != Screen.Test.route &&
@@ -43,6 +46,7 @@ fun NavGraph() {
         bottomBar = {
             if (shouldShowBottomBar) {
                 NavigationBar {
+<<<<<<< HEAD
                     NavigationBarItem(
                         icon = { Text("🏠", fontSize = 24.sp) },
                         label = { Text("Trang chủ") },
@@ -56,6 +60,20 @@ fun NavGraph() {
                                 }
                                 launchSingleTop = true
                                 restoreState = true
+=======
+                NavigationBarItem(
+                    icon = { Text("🏠", fontSize = 24.sp) },
+                    label = { Text("Trang chủ") },
+                    selected = currentDestination?.hierarchy?.any {
+                        it.route == Screen.Home.route
+                    } == true,
+                    onClick = {
+                        navController.navigate(Screen.Home.route) {
+                            // Clear toàn bộ back stack
+                            popUpTo(navController.graph.findStartDestination().id) {
+                                saveState = true
+                                inclusive = false
+>>>>>>> 698052b80ca9177a3c20f20d6be9bee8567b0984
                             }
                         }
                     )
@@ -130,6 +148,7 @@ fun NavGraph() {
                         }
                     )
                 }
+            }
             }
         }
     ) { innerPadding ->
