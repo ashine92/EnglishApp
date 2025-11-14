@@ -47,44 +47,66 @@ class TestGeneratorTest {
     }
 
     @Test
-    fun generateFillBlankQuestions_filtersVocabsWithoutExample() {
+    fun generateFillBlankQuestions_usesVocabsWithoutExampleWhenNeeded() {
         val vocabs = listOf(
             createMockVocab(1, "hello", "xin chào", null),
             createMockVocab(2, "world", "thế giới", ""),
             createMockVocab(3, "apple", "táo", "I like apples.")
         )
 
-        val questions = TestGenerator.generateFillBlankQuestions(vocabs, 10)
+        val questions = TestGenerator.generateFillBlankQuestions(vocabs, 3)
 
-        // Only the vocab with non-empty example should be included
-        assertEquals(1, questions.size)
-        assertTrue(questions[0].sentence.contains("_____"))
+        // Should now generate 3 questions (1 with example, 2 with fallback format)
+        assertEquals(3, questions.size)
+        assertTrue(questions.all { it.sentence.contains("_____") })
+        
+        // At least one should use fallback format
+        assertTrue(questions.any { it.sentence.startsWith("Điền từ phù hợp:") })
     }
 
     @Test
-    fun generateMatchingQuestions_createsMultipleQuestions() {
-        val vocabs = (1..10).map { i ->
+    fun generateFillBlankQuestions_prioritizesVocabsWithExample() {
+        val vocabs = listOf(
+            createMockVocab(1, "hello", "xin chào", "Say hello to everyone."),
+            createMockVocab(2, "world", "thế giới", "Welcome to the world."),
+            createMockVocab(3, "apple", "táo", null),
+            createMockVocab(4, "book", "sách", null)
+        )
+
+        val questions = TestGenerator.generateFillBlankQuestions(vocabs, 3)
+
+        assertEquals(3, questions.size)
+        // First 2 should have examples (not fallback format)
+        val withExamples = questions.filter { !it.sentence.startsWith("Điền từ phù hợp:") }
+        assertTrue(withExamples.size >= 2)
+    }
+
+    @Test
+    fun generateMatchingQuestions_createsRequestedNumberOfQuestions() {
+        val vocabs = (1..20).map { i ->
             createMockVocab(i.toLong(), "word$i", "meaning$i", "example$i")
         }
 
-        val questions = TestGenerator.generateMatchingQuestions(vocabs, pairsCount = 5)
+        val questions = TestGenerator.generateMatchingQuestions(vocabs, count = 10)
 
-        // With 10 vocabs and 5 pairs per question, we should get 2 questions
-        assertEquals(2, questions.size)
+        // Should create exactly 10 questions as requested
+        assertEquals(10, questions.size)
     }
 
     @Test
     fun generateMatchingQuestions_eachQuestionHasCorrectPairs() {
-        val vocabs = (1..10).map { i ->
+        val vocabs = (1..25).map { i ->
             createMockVocab(i.toLong(), "word$i", "meaning$i", "example$i")
         }
 
-        val questions = TestGenerator.generateMatchingQuestions(vocabs, pairsCount = 5)
+        val questions = TestGenerator.generateMatchingQuestions(vocabs, count = 5)
 
-        // First question should have 5 pairs
-        assertEquals(5, questions[0].pairs.size)
-        // Second question should have 5 pairs
-        assertEquals(5, questions[1].pairs.size)
+        assertEquals(5, questions.size)
+        
+        // Each question should have 5 pairs
+        questions.forEach { question ->
+            assertEquals(5, question.pairs.size)
+        }
 
         // Verify pairs contain word-meaning combinations
         questions.forEach { question ->
@@ -96,27 +118,31 @@ class TestGeneratorTest {
     }
 
     @Test
-    fun generateMatchingQuestions_withFewerVocabsThanPairs_createsOneQuestion() {
+    fun generateMatchingQuestions_recyclesVocabsWhenNotEnough() {
         val vocabs = (1..3).map { i ->
             createMockVocab(i.toLong(), "word$i", "meaning$i", "example$i")
         }
 
-        val questions = TestGenerator.generateMatchingQuestions(vocabs, pairsCount = 5)
+        val questions = TestGenerator.generateMatchingQuestions(vocabs, count = 5)
 
-        // With only 3 vocabs, should create 1 question with 3 pairs
-        assertEquals(1, questions.size)
-        assertEquals(3, questions[0].pairs.size)
+        // Should create 5 questions even with only 3 vocabs
+        assertEquals(5, questions.size)
+        
+        // Each question should have pairs (recycled vocabs will be used)
+        questions.forEach { question ->
+            assertTrue(question.pairs.isNotEmpty())
+        }
     }
 
     @Test
     fun generateMatchingQuestions_withExactMultiple_createsCorrectCount() {
-        val vocabs = (1..15).map { i ->
+        val vocabs = (1..25).map { i ->
             createMockVocab(i.toLong(), "word$i", "meaning$i", "example$i")
         }
 
-        val questions = TestGenerator.generateMatchingQuestions(vocabs, pairsCount = 5)
+        val questions = TestGenerator.generateMatchingQuestions(vocabs, count = 3)
 
-        // With 15 vocabs and 5 pairs per question, we should get 3 questions
+        // Should create exactly 3 questions as requested
         assertEquals(3, questions.size)
         assertEquals(5, questions[0].pairs.size)
         assertEquals(5, questions[1].pairs.size)
@@ -125,11 +151,11 @@ class TestGeneratorTest {
 
     @Test
     fun generateMatchingQuestions_hasUniqueIds() {
-        val vocabs = (1..10).map { i ->
+        val vocabs = (1..20).map { i ->
             createMockVocab(i.toLong(), "word$i", "meaning$i", "example$i")
         }
 
-        val questions = TestGenerator.generateMatchingQuestions(vocabs, pairsCount = 5)
+        val questions = TestGenerator.generateMatchingQuestions(vocabs, count = 10)
 
         val ids = questions.map { it.id }
         assertEquals(ids.size, ids.toSet().size) // All IDs should be unique
