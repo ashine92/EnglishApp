@@ -36,7 +36,10 @@ fun TestScreen(
             TopAppBar(
                 title = { Text("Bài Kiểm Tra") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = {
+                        viewModel.resetTest()  // Reset test state trước
+                        onNavigateBack()       // Sau đó navigate
+                    }) {
                         Text("←", fontSize = 24.sp)
                     }
                 }
@@ -78,7 +81,10 @@ fun TestScreen(
                     TestResultContent(
                         result = state.result,
                         onRetry = { viewModel.resetTest() },
-                        onExit = onNavigateBack
+                        onExit = {
+                            viewModel.resetTest()  // Reset test state
+                            onNavigateBack()       // Navigate về
+                        }
                     )
                 }
                 is TestUiState.Error -> {
