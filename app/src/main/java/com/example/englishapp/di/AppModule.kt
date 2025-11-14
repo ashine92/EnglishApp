@@ -4,8 +4,11 @@ import androidx.room.Room
 import com.example.englishapp.data.local.VocabDatabase
 import com.example.englishapp.data.remote.DictionaryApi
 import com.example.englishapp.data.remote.RetrofitClient
+import com.example.englishapp.data.repository.FlashcardRepository
 import com.example.englishapp.data.repository.TestRepository
 import com.example.englishapp.data.repository.VocabRepository
+import com.example.englishapp.ui.screens.flashcard.FlashcardStudyViewModel
+import com.example.englishapp.ui.screens.flashcard.FlashcardViewModel
 import com.example.englishapp.ui.screens.home.HomeViewModel
 import com.example.englishapp.ui.screens.search.SearchViewModel
 import com.example.englishapp.ui.screens.test.TestViewModel
@@ -29,6 +32,7 @@ val appModule = module {
     // DAOs
     single { get<VocabDatabase>().vocabDao() }
     single { get<VocabDatabase>().testResultDao() }
+    single { get<VocabDatabase>().flashcardDao() }
 
     // Network
     single<DictionaryApi> { RetrofitClient.api }
@@ -36,10 +40,13 @@ val appModule = module {
     // Repositories
     single { VocabRepository(get(), get()) }
     single { TestRepository(get()) }
+    single { FlashcardRepository(get()) }
 
     // ViewModels
     viewModel { HomeViewModel(get(), get()) }
     viewModel { SearchViewModel(get()) }
     viewModel { VocabViewModel(get()) }
     viewModel { TestViewModel(get(), get()) }
+    viewModel { FlashcardViewModel(get(), get()) }
+    viewModel { FlashcardStudyViewModel(get()) }
 }

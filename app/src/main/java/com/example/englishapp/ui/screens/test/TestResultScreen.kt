@@ -21,7 +21,7 @@ fun TestResultContent(
     onExit: () -> Unit
 ) {
     val scrollState = rememberScrollState()
-    
+
     Column(
         modifier = Modifier
             .fillMaxSize()

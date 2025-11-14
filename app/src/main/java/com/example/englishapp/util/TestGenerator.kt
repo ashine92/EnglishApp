@@ -37,7 +37,7 @@ object TestGenerator {
         // Ưu tiên lấy từ có example
         val vocabsWithExample = vocabs.filter { !it.example.isNullOrBlank() }.shuffled()
         val vocabsWithoutExample = vocabs.filter { it.example.isNullOrBlank() }.shuffled()
-        
+
         // Kết hợp: lấy từ có example trước, thiếu thì lấy từ không có example
         val selectedVocabs = (vocabsWithExample + vocabsWithoutExample).take(count)
 
@@ -70,18 +70,18 @@ object TestGenerator {
     ): List<TestQuestion.Matching> {
         val pairsPerQuestion = 5  // Số cặp từ mỗi câu hỏi
         val shuffledVocabs = vocabs.shuffled()
-        
+
         return (0 until count).mapNotNull { questionIndex ->
             val startIndex = questionIndex * pairsPerQuestion
             val endIndex = (startIndex + pairsPerQuestion).coerceAtMost(shuffledVocabs.size)
-            
+
             if (startIndex >= shuffledVocabs.size) {
                 // Nếu hết từ, lặp lại từ đầu
                 val recycledVocabs = shuffledVocabs.shuffled().take(pairsPerQuestion)
                 val pairs = recycledVocabs.map { vocab ->
                     vocab.word to vocab.meaning
                 }
-                
+
                 TestQuestion.Matching(
                     id = "match_$questionIndex",
                     vocab = recycledVocabs.first(),
@@ -90,11 +90,11 @@ object TestGenerator {
             } else {
                 val selectedVocabs = shuffledVocabs.subList(startIndex, endIndex)
                 if (selectedVocabs.isEmpty()) return@mapNotNull null
-                
+
                 val pairs = selectedVocabs.map { vocab ->
                     vocab.word to vocab.meaning
                 }
-                
+
                 TestQuestion.Matching(
                     id = "match_$questionIndex",
                     vocab = selectedVocabs.first(),

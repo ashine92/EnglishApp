@@ -31,7 +31,7 @@ android {
 
     // ✅ Update phiên bản compiler extension cho khớp Compose BOM
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.6.11"
+        kotlinCompilerExtensionVersion = libs.versions.composeCompiler.get()
     }
 
     kotlinOptions {
@@ -67,6 +67,6 @@ dependencies {
 
     // Koin for DI
     implementation("io.insert-koin:koin-androidx-compose:3.5.3")
-
+    implementation("io.insert-koin:koin-android:3.5.0")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
