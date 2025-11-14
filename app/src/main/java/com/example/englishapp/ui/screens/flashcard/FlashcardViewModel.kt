@@ -1,0 +1,111 @@
+package com.example.englishapp.ui.screens.flashcard
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.englishapp.data.repository.FlashcardRepository
+import com.example.englishapp.data.repository.VocabRepository
+import com.example.englishapp.domain.model.FlashcardDeck
+import com.example.englishapp.domain.model.Flashcard
+import com.example.englishapp.domain.model.Vocabulary
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+
+class FlashcardViewModel(
+    private val flashcardRepository: FlashcardRepository,
+    private val vocabRepository: VocabRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow<FlashcardUiState>(FlashcardUiState.Loading)
+    val uiState: StateFlow<FlashcardUiState> = _uiState.asStateFlow()
+
+    private val _selectedDeck = MutableStateFlow<FlashcardDeck?>(null)
+    val selectedDeck: StateFlow<FlashcardDeck?> = _selectedDeck.asStateFlow()
+
+    init {
+        loadDecks()
+    }
+
+    fun loadDecks() {
+        viewModelScope.launch {
+            try {
+                flashcardRepository.getAllDecks().collect { decks ->
+                    if (decks.isEmpty()) {
+                        _uiState.value = FlashcardUiState.Empty
+                    } else {
+                        _uiState.value = FlashcardUiState.Success(decks)
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.value = FlashcardUiState.Error(e.message ?: "Unknown error")
+            }
+        }
+    }
+
+    fun loadDeckWithStats(deckId: Long) {
+        viewModelScope.launch {
+            try {
+                val deck = flashcardRepository.getDeckWithStats(deckId)
+                _selectedDeck.value = deck
+            } catch (e: Exception) {
+                _uiState.value = FlashcardUiState.Error(e.message ?: "Failed to load deck")
+            }
+        }
+    }
+
+    fun createDeck(name: String, description: String?) {
+        viewModelScope.launch {
+            try {
+                flashcardRepository.createDeck(name, description)
+                loadDecks()
+            } catch (e: Exception) {
+                _uiState.value = FlashcardUiState.Error(e.message ?: "Failed to create deck")
+            }
+        }
+    }
+
+    fun deleteDeck(deckId: Long) {
+        viewModelScope.launch {
+            try {
+                flashcardRepository.deleteDeck(deckId)
+                loadDecks()
+            } catch (e: Exception) {
+                _uiState.value = FlashcardUiState.Error(e.message ?: "Failed to delete deck")
+            }
+        }
+    }
+
+    fun createDeckFromVocabs(name: String, description: String?, vocabIds: List<Long>) {
+        viewModelScope.launch {
+            try {
+                val deckId = flashcardRepository.createDeck(name, description)
+
+                // Get selected vocabularies
+                val allVocabs = vocabRepository.getRandomVocabs(1000) // Get all
+                val selectedVocabs = allVocabs.filter { it.id in vocabIds }
+
+                // Add cards to deck
+                selectedVocabs.forEach { vocab ->
+                    flashcardRepository.addCardToDeck(
+                        deckId = deckId,
+                        vocabId = vocab.id,
+                        frontContent = vocab.word,
+                        backContent = vocab.meaning,
+                        example = vocab.example,
+                        phonetic = vocab.phonetic
+                    )
+                }
+
+                loadDecks()
+            } catch (e: Exception) {
+                _uiState.value = FlashcardUiState.Error(e.message ?: "Failed to create deck")
+            }
+        }
+    }
+}
+
+sealed class FlashcardUiState {
+    object Loading : FlashcardUiState()
+    object Empty : FlashcardUiState()
+    data class Success(val decks: List<FlashcardDeck>) : FlashcardUiState()
+    data class Error(val message: String) : FlashcardUiState()
+}
