@@ -1,6 +1,7 @@
 package com.example.englishapp.ui.navigation
 
 import androidx.compose.foundation.layout.padding
+import androidx.compose.runtime.LaunchedEffect
 import org.koin.compose.koinInject
 import org.koin.androidx.compose.koinViewModel
 import androidx.compose.material3.*
@@ -22,6 +23,7 @@ import androidx.navigation.navArgument
 import com.example.englishapp.data.repository.FlashcardRepository
 import com.example.englishapp.ui.screens.flashcard.*
 import com.example.englishapp.ui.screens.home.HomeScreen
+import com.example.englishapp.ui.screens.pronunciation.PronunciationViewModel
 import com.example.englishapp.ui.screens.search.SearchScreen
 import com.example.englishapp.ui.screens.test.TestScreen
 import com.example.englishapp.ui.screens.vocabulary.VocabListScreen
@@ -33,10 +35,11 @@ fun NavGraph() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     
-    // Ẩn bottom bar khi ở Test screen hoặc Flashcard study screen hoặc Pronunciation screen
+    // Ẩn bottom bar khi ở Test screen hoặc Flashcard study screen hoặc Pronunciation screens
     val shouldShowBottomBar = currentDestination?.route != Screen.Test.route &&
             currentDestination?.route?.startsWith("flashcard_study") != true &&
-            currentDestination?.route != Screen.Pronunciation.route
+            currentDestination?.route != Screen.PronunciationWordSelection.route &&
+            currentDestination?.route?.startsWith("pronunciation/") != true
 
     var showCreateDeckDialog by remember { mutableStateOf(false) }
 
@@ -152,7 +155,7 @@ fun NavGraph() {
                         navController.navigate(Screen.Test.route)
                     },
                     onNavigateToPronunciation = {
-                        navController.navigate(Screen.Pronunciation.route)
+                        navController.navigate(Screen.PronunciationWordSelection.route)
                     }
                 )
             }
@@ -177,12 +180,46 @@ fun NavGraph() {
                 )
             }
             
-            // Pronunciation Screen
-            composable(Screen.Pronunciation.route) {
+            // Pronunciation Word Selection Screen
+            composable(Screen.PronunciationWordSelection.route) {
+                val viewModel: PronunciationViewModel = koinViewModel()
+                
+                // Load vocabulary list when entering this screen
+                LaunchedEffect(Unit) {
+                    viewModel.loadVocabularyList()
+                }
+                
+                com.example.englishapp.ui.screens.pronunciation.PronunciationWordSelectionScreen(
+                    viewModel = viewModel,
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    },
+                    onWordSelected = { vocabId ->
+                        navController.navigate(Screen.Pronunciation.createRoute(vocabId))
+                    }
+                )
+            }
+            
+            // Pronunciation Practice Screen
+            composable(
+                route = Screen.Pronunciation.route,
+                arguments = listOf(
+                    navArgument("vocabId") { type = NavType.LongType }
+                )
+            ) { backStackEntry ->
+                val vocabId = backStackEntry.arguments?.getLong("vocabId") ?: 0L
+                val viewModel: PronunciationViewModel = koinViewModel()
+                
+                // Load the selected word when entering this screen
+                LaunchedEffect(vocabId) {
+                    viewModel.loadWordById(vocabId)
+                }
+                
                 com.example.englishapp.ui.screens.pronunciation.PronunciationScreen(
                     onNavigateBack = {
                         navController.popBackStack()
-                    }
+                    },
+                    viewModel = viewModel
                 )
             }
 
