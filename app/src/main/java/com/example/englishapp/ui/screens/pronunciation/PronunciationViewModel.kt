@@ -31,29 +31,62 @@ class PronunciationViewModel(
     private val _microphoneState = MutableStateFlow(MicrophoneState.IDLE)
     val microphoneState: StateFlow<MicrophoneState> = _microphoneState.asStateFlow()
 
-    private var availableVocabs = listOf<Vocabulary>()
+    // For word selection screen
+    private val _vocabularyList = MutableStateFlow<List<Vocabulary>>(emptyList())
+    val vocabularyList: StateFlow<List<Vocabulary>> = _vocabularyList.asStateFlow()
 
-    init {
-        loadVocabulary()
-    }
+    private val _pronunciationStats = MutableStateFlow<Map<Long, VocabularyPronunciationStats>>(emptyMap())
+    val pronunciationStats: StateFlow<Map<Long, VocabularyPronunciationStats>> = _pronunciationStats.asStateFlow()
+
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading.asStateFlow()
 
     /**
-     * Load vocabulary from database
+     * Load all vocabulary for word selection
      */
-    private fun loadVocabulary() {
+    fun loadVocabularyList() {
         viewModelScope.launch {
+            _isLoading.value = true
             try {
-                // Get random vocabularies from database
-                val vocabs = vocabRepository.getRandomVocabs(100)
-                availableVocabs = vocabs
-                
-                if (vocabs.isNotEmpty()) {
-                    _currentWord.value = vocabs.random()
-                } else {
-                    _uiState.value = PronunciationUiState.Error("No vocabulary available. Please add some words first.")
+                vocabRepository.getAllVocabs().collect { vocabs ->
+                    _vocabularyList.value = vocabs
+                    
+                    // Load pronunciation statistics for each vocabulary
+                    val stats = mutableMapOf<Long, VocabularyPronunciationStats>()
+                    vocabs.forEach { vocab ->
+                        val practiceCount = pronunciationRepository.getPracticeCount(vocab.id)
+                        val averageScore = pronunciationRepository.getAverageScore(vocab.id)
+                        stats[vocab.id] = VocabularyPronunciationStats(
+                            practiceCount = practiceCount,
+                            averageScore = averageScore
+                        )
+                    }
+                    _pronunciationStats.value = stats
+                    _isLoading.value = false
                 }
             } catch (e: Exception) {
                 _uiState.value = PronunciationUiState.Error("Failed to load vocabulary: ${e.message}")
+                _isLoading.value = false
+            }
+        }
+    }
+
+    /**
+     * Load a specific word by ID for pronunciation practice
+     */
+    fun loadWordById(vocabId: Long) {
+        viewModelScope.launch {
+            try {
+                val vocabs = _vocabularyList.value
+                val word = vocabs.find { it.id == vocabId }
+                if (word != null) {
+                    _currentWord.value = word
+                    _uiState.value = PronunciationUiState.Idle
+                } else {
+                    _uiState.value = PronunciationUiState.Error("Word not found")
+                }
+            } catch (e: Exception) {
+                _uiState.value = PronunciationUiState.Error("Failed to load word: ${e.message}")
             }
         }
     }
@@ -97,6 +130,15 @@ class PronunciationViewModel(
 
             _uiState.value = result.fold(
                 onSuccess = { pronunciationResult ->
+                    // Save pronunciation progress
+                    pronunciationRepository.savePronunciationProgress(
+                        vocabId = word.id,
+                        word = word.word,
+                        userText = _recognizedText.value,
+                        score = pronunciationResult.score,
+                        similarity = pronunciationResult.similarity
+                    )
+                    
                     PronunciationUiState.Success(pronunciationResult)
                 },
                 onFailure = { error ->
@@ -107,21 +149,19 @@ class PronunciationViewModel(
     }
 
     /**
-     * Reset to try again with new word
+     * Reset current attempt (keep same word)
      */
-    fun tryAgain() {
-        if (availableVocabs.isNotEmpty()) {
-            _currentWord.value = availableVocabs.random()
-        }
+    fun reset() {
         _recognizedText.value = ""
         _uiState.value = PronunciationUiState.Idle
         _microphoneState.value = MicrophoneState.IDLE
     }
 
     /**
-     * Reset current attempt
+     * Clear current word (for navigating back to selection)
      */
-    fun reset() {
+    fun clearCurrentWord() {
+        _currentWord.value = null
         _recognizedText.value = ""
         _uiState.value = PronunciationUiState.Idle
         _microphoneState.value = MicrophoneState.IDLE

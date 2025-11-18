@@ -35,6 +35,23 @@ val MIGRATION_2_3 = object : Migration(2, 3) {
     }
 }
 
+// Migration from version 3 to 4: Add pronunciation_progress table
+val MIGRATION_3_4 = object : Migration(3, 4) {
+    override fun migrate(database: SupportSQLiteDatabase) {
+        database.execSQL("""
+            CREATE TABLE IF NOT EXISTS pronunciation_progress (
+                id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                vocabId INTEGER NOT NULL,
+                word TEXT NOT NULL,
+                userText TEXT NOT NULL,
+                score INTEGER NOT NULL,
+                similarity TEXT NOT NULL,
+                timestamp INTEGER NOT NULL
+            )
+        """.trimIndent())
+    }
+}
+
 val appModule = module {
     // Database
     single {
@@ -43,7 +60,7 @@ val appModule = module {
             VocabDatabase::class.java,
             "vocab_database"
         )
-            .addMigrations(MIGRATION_2_3)
+            .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
             .fallbackToDestructiveMigration()
             .build()
     }
@@ -52,6 +69,7 @@ val appModule = module {
     single { get<VocabDatabase>().vocabDao() }
     single { get<VocabDatabase>().testResultDao() }
     single { get<VocabDatabase>().flashcardDao() }
+    single { get<VocabDatabase>().pronunciationProgressDao() }
 
     // Network - Gemini API Services
     single { GeminiWordLookupService(Constants.GEMINI_API_KEY) }
@@ -61,7 +79,7 @@ val appModule = module {
     single { VocabRepository(get(), get()) }
     single { TestRepository(get()) }
     single { FlashcardRepository(get(), get()) }
-    single { PronunciationRepository(get()) }
+    single { PronunciationRepository(get(), get()) }
 
     // ViewModels
     viewModel { HomeViewModel(get(), get()) }

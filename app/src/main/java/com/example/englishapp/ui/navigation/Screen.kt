@@ -8,7 +8,10 @@ sealed class Screen(val route: String) {
         fun createRoute(vocabId: Long) = "vocab_detail/$vocabId"
     }
     object Test : Screen("test")
-    object Pronunciation : Screen("pronunciation")
+    object PronunciationWordSelection : Screen("pronunciation_word_selection")
+    object Pronunciation : Screen("pronunciation/{vocabId}") {
+        fun createRoute(vocabId: Long) = "pronunciation/$vocabId"
+    }
 
     // Flashcard routes
     object FlashcardDeckList : Screen("flashcard_deck_list")

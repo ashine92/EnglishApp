@@ -416,14 +416,14 @@ fun PronunciationResultCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Try Again Button
+            // Back to Selection Button
             Button(
-                onClick = { viewModel.tryAgain() },
+                onClick = { viewModel.clearCurrentWord(); onNavigateBack() },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.Refresh, contentDescription = null)
+                Icon(Icons.Default.ArrowBack, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Try Again")
+                Text("Chọn từ khác")
             }
         }
     }
