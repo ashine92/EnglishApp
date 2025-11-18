@@ -70,5 +70,5 @@ val appModule = module {
     viewModel { TestViewModel(get(), get()) }
     viewModel { FlashcardViewModel(get(), get()) }
     viewModel { FlashcardStudyViewModel(get()) }
-    viewModel { PronunciationViewModel(get()) }
+    viewModel { PronunciationViewModel(get(), get()) }
 }
