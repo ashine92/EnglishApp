@@ -35,7 +35,7 @@ fun PronunciationScreen(
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
-    val sampleSentence by viewModel.sampleSentence.collectAsState()
+    val currentWord by viewModel.currentWord.collectAsState()
     val recognizedText by viewModel.recognizedText.collectAsState()
     val microphoneState by viewModel.microphoneState.collectAsState()
 
@@ -74,7 +74,7 @@ fun PronunciationScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Pronunciation Practice") },
+                title = { Text("Luyện Phát Âm") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
@@ -90,48 +90,85 @@ fun PronunciationScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Sample Sentence Section
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
-                elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+            // Current Word Section
+            if (currentWord != null) {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "Từ vựng cần luyện",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = currentWord!!.word,
+                            fontSize = 32.sp,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.padding(vertical = 8.dp)
+                        )
+                        
+                        currentWord!!.phonetic?.let { phonetic ->
+                            Text(
+                                text = phonetic,
+                                fontSize = 18.sp,
+                                color = Color.Gray,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        Text(
+                            text = currentWord!!.meaning,
+                            fontSize = 16.sp,
+                            color = Color.DarkGray,
+                            textAlign = TextAlign.Center
+                        )
+                        
+                        Spacer(modifier = Modifier.height(8.dp))
+                        
+                        // TTS Speaker Button
+                        IconButton(
+                            onClick = {
+                                tts?.speak(currentWord!!.word, TextToSpeech.QUEUE_FLUSH, null, null)
+                            }
+                        ) {
+                            Icon(
+                                Icons.Default.VolumeUp,
+                                contentDescription = "Play pronunciation",
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(32.dp)
+                            )
+                        }
+                    }
+                }
+            } else if (uiState is PronunciationUiState.Error) {
+                // Show error if no vocabulary available
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.errorContainer
+                    )
                 ) {
                     Text(
-                        text = "Sample Sentence",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
+                        text = (uiState as PronunciationUiState.Error).message,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        modifier = Modifier.padding(16.dp),
+                        textAlign = TextAlign.Center
                     )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    Text(
-                        text = sampleSentence,
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Medium,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier.padding(vertical = 8.dp)
-                    )
-                    
-                    Spacer(modifier = Modifier.height(8.dp))
-                    
-                    // TTS Speaker Button
-                    IconButton(
-                        onClick = {
-                            tts?.speak(sampleSentence, TextToSpeech.QUEUE_FLUSH, null, null)
-                        }
-                    ) {
-                        Icon(
-                            Icons.Default.VolumeUp,
-                            contentDescription = "Play pronunciation",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(32.dp)
-                        )
-                    }
                 }
             }
 
