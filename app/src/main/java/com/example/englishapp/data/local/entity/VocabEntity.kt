@@ -14,7 +14,7 @@ data class VocabEntity(
     val partOfSpeech: String?, // noun, verb, adjective...
     val category: String?, // business, technology, daily...
     val difficulty: Int = 1, // 1-5
-    val learningStatus: String = "NEW", // NEW, LEARNING, MASTERED
+    val learningStatus: String = "NOT_LEARNED", // NOT_LEARNED, LEARNED
     val correctCount: Int = 0,
     val wrongCount: Int = 0,
     val lastReviewDate: Long = 0,

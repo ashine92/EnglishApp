@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -18,9 +18,11 @@ import kotlin.math.roundToInt
 fun TestResultContent(
     result: TestResult,
     onRetry: () -> Unit,
-    onExit: () -> Unit
+    onExit: () -> Unit,
+    wrongVocabs: List<com.example.englishapp.domain.model.Vocabulary> = emptyList()
 ) {
     val scrollState = rememberScrollState()
+    var showWrongAnswers by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -90,6 +92,46 @@ fun TestResultContent(
             }
         }
 
+        Spacer(modifier = Modifier.height(16.dp))
+
+        // Show wrong answers button if there are any
+        if (result.wrongAnswers > 0 && wrongVocabs.isNotEmpty()) {
+            OutlinedButton(
+                onClick = { showWrongAnswers = !showWrongAnswers },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    if (showWrongAnswers) "Ẩn câu trả lời sai" else "Xem câu trả lời sai (${result.wrongAnswers})"
+                )
+            }
+
+            if (showWrongAnswers) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFF3E0)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Các từ trả lời sai:",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFFE65100)
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        wrongVocabs.forEach { vocab ->
+                            WrongAnswerItem(vocab)
+                            Spacer(modifier = Modifier.height(8.dp))
+                        }
+                    }
+                }
+            }
+        }
+
         Spacer(modifier = Modifier.height(32.dp))
 
         // Action buttons
@@ -152,4 +194,47 @@ fun formatDuration(millis: Long): String {
     val seconds = (millis / 1000) % 60
     val minutes = (millis / (1000 * 60)) % 60
     return String.format("%02d:%02d", minutes, seconds)
+}
+
+@Composable
+fun WrongAnswerItem(vocab: com.example.englishapp.domain.model.Vocabulary) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        )
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp)
+        ) {
+            Text(
+                text = vocab.word,
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFFE65100)
+            )
+            vocab.phonetic?.let { phonetic ->
+                Text(
+                    text = phonetic,
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+            }
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = vocab.meaning,
+                fontSize = 14.sp,
+                color = Color(0xFF424242)
+            )
+            vocab.example?.let { example ->
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = "\"$example\"",
+                    fontSize = 12.sp,
+                    color = Color.Gray,
+                    fontStyle = androidx.compose.ui.text.font.FontStyle.Italic
+                )
+            }
+        }
+    }
 }

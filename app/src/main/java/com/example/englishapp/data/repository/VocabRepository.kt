@@ -98,8 +98,12 @@ class VocabRepository(
         val currentTime = System.currentTimeMillis()
         if (isCorrect) {
             vocabDao.incrementCorrectCount(vocabId, currentTime)
+            // Mark as learned when answered correctly
+            vocabDao.updateLearningStatus(vocabId, LearningStatus.LEARNED.name)
         } else {
             vocabDao.incrementWrongCount(vocabId, currentTime)
+            // Keep as not learned when answered incorrectly
+            vocabDao.updateLearningStatus(vocabId, LearningStatus.NOT_LEARNED.name)
         }
     }
 

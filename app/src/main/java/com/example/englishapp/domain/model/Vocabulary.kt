@@ -9,7 +9,7 @@ data class Vocabulary(
     val partOfSpeech: String? = null,
     val category: String? = null,
     val difficulty: Int = 1,
-    val learningStatus: LearningStatus = LearningStatus.NEW,
+    val learningStatus: LearningStatus = LearningStatus.NOT_LEARNED,
     val correctCount: Int = 0,
     val wrongCount: Int = 0,
     val lastReviewDate: Long = 0,
@@ -17,7 +17,6 @@ data class Vocabulary(
 )
 
 enum class LearningStatus {
-    NEW,
-    LEARNING,
-    MASTERED
+    NOT_LEARNED,  // Chưa học
+    LEARNED       // Đã học
 }

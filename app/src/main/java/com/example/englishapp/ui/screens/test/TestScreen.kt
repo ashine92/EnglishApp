@@ -80,6 +80,7 @@ fun TestScreen(
                 is TestUiState.Finished -> {
                     TestResultContent(
                         result = state.result,
+                        wrongVocabs = state.wrongVocabs,
                         onRetry = { viewModel.resetTest() },
                         onExit = {
                             viewModel.resetTest()  // Reset test state
@@ -478,10 +479,11 @@ fun MatchingQuestion(
     var selectedMatches by remember(question.id) {
         mutableStateOf<Map<String, String>>(emptyMap())
     }
-    var selectedWord by remember { mutableStateOf<String?>(null) }
+    var selectedWord by remember(question.id) { mutableStateOf<String?>(null) }
 
-    val words = question.pairs.map { it.first }.shuffled()
-    val meanings = question.pairs.map { it.second }.shuffled()
+    // Remember shuffled lists to prevent reshuffling on recomposition
+    val words = remember(question.id) { question.pairs.map { it.first }.shuffled() }
+    val meanings = remember(question.id) { question.pairs.map { it.second }.shuffled() }
 
     Column {
         Text(

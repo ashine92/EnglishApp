@@ -24,6 +24,7 @@ class TestViewModel(
     private var currentQuestions = listOf<TestQuestion>()
     private var currentQuestionIndex = 0
     private var correctAnswers = 0
+    private var wrongVocabIds = mutableListOf<Long>() // Track wrong answers
     private var startTime = 0L
 
     fun generateTest(testType: TestType, questionCount: Int = 10) {
@@ -55,6 +56,7 @@ class TestViewModel(
 
                 currentQuestionIndex = 0
                 correctAnswers = 0
+                wrongVocabIds.clear() // Clear wrong answers
                 startTime = System.currentTimeMillis()
 
                 _uiState.value = TestUiState.Testing(
@@ -82,6 +84,9 @@ class TestViewModel(
 
         if (isCorrect) {
             correctAnswers++
+        } else {
+            // Track wrong answer
+            wrongVocabIds.add(currentQuestion.vocab.id)
         }
 
         viewModelScope.launch {
@@ -94,15 +99,34 @@ class TestViewModel(
     fun submitMatchingAnswers(matches: Map<String, String>) {
         val currentQuestion = currentQuestions[currentQuestionIndex] as TestQuestion.Matching
         var correctMatches = 0
+        val wrongVocabsInMatching = mutableListOf<Long>()
 
-        matches.forEach { (word, meaning) ->
-            if (currentQuestion.pairs.any { it.first == word && it.second == meaning }) {
+        // Check each pair in the question
+        currentQuestion.pairs.forEach { (word, correctMeaning) ->
+            val userMeaning = matches[word]
+            val isCorrect = userMeaning == correctMeaning
+            
+            if (isCorrect) {
                 correctMatches++
+            } else {
+                // Find the vocab ID for this word and add to wrong list
+                val vocab = currentQuestion.pairs.find { it.first == word }
+                if (vocab != null) {
+                    wrongVocabsInMatching.add(currentQuestion.vocab.id)
+                }
+            }
+            
+            // Update each vocab's review status
+            viewModelScope.launch {
+                vocabRepository.updateVocabReview(currentQuestion.vocab.id, isCorrect)
             }
         }
 
         if (correctMatches == currentQuestion.pairs.size) {
             correctAnswers++
+        } else {
+            // Add to wrong answers if not all pairs matched correctly
+            wrongVocabIds.add(currentQuestion.vocab.id)
         }
 
         moveToNextQuestion()
@@ -135,12 +159,18 @@ class TestViewModel(
                 wrongAnswers = currentQuestions.size - correctAnswers,
                 score = score,
                 duration = duration,
-                vocabIds = currentQuestions.map { it.vocab.id }
+                vocabIds = currentQuestions.map { it.vocab.id },
+                wrongVocabIds = wrongVocabIds.toList() // Include wrong vocab IDs
             )
 
             testRepository.insertTestResult(result)
 
-            _uiState.value = TestUiState.Finished(result)
+            // Get wrong vocabularies for display
+            val wrongVocabularies = currentQuestions
+                .filter { wrongVocabIds.contains(it.vocab.id) }
+                .map { it.vocab }
+
+            _uiState.value = TestUiState.Finished(result, wrongVocabularies)
         }
     }
 
@@ -149,6 +179,7 @@ class TestViewModel(
         currentQuestions = emptyList()
         currentQuestionIndex = 0
         correctAnswers = 0
+        wrongVocabIds.clear() // Clear wrong answers
         startTime = 0L
     }
 }
@@ -162,6 +193,9 @@ sealed class TestUiState {
         val totalQuestions: Int,
         val testType: TestType
     ) : TestUiState()
-    data class Finished(val result: TestResult) : TestUiState()
+    data class Finished(
+        val result: TestResult,
+        val wrongVocabs: List<com.example.englishapp.domain.model.Vocabulary> = emptyList()
+    ) : TestUiState()
     data class Error(val message: String) : TestUiState()
 }

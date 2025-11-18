@@ -195,23 +195,16 @@ fun VocabListItem(
                         onDismissRequest = { showMenu = false }
                     ) {
                         DropdownMenuItem(
-                            text = { Text("Mới học") },
+                            text = { Text("Chưa học") },
                             onClick = {
-                                onStatusChange(LearningStatus.NEW)
+                                onStatusChange(LearningStatus.NOT_LEARNED)
                                 showMenu = false
                             }
                         )
                         DropdownMenuItem(
-                            text = { Text("Đang học") },
+                            text = { Text("Đã học") },
                             onClick = {
-                                onStatusChange(LearningStatus.LEARNING)
-                                showMenu = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Đã thuộc") },
-                            onClick = {
-                                onStatusChange(LearningStatus.MASTERED)
+                                onStatusChange(LearningStatus.LEARNED)
                                 showMenu = false
                             }
                         )
@@ -278,9 +271,8 @@ fun VocabListItem(
 @Composable
 fun StatusBadge(status: LearningStatus) {
     val (color, text) = when (status) {
-        LearningStatus.NEW -> Color(0xFF2196F3) to "Mới"
-        LearningStatus.LEARNING -> Color(0xFFFFC107) to "Đang học"
-        LearningStatus.MASTERED -> Color(0xFF4CAF50) to "Đã thuộc"
+        LearningStatus.NOT_LEARNED -> Color(0xFFFFC107) to "Chưa học"
+        LearningStatus.LEARNED -> Color(0xFF4CAF50) to "Đã học"
     }
 
     Surface(
@@ -361,9 +353,8 @@ fun StatusFilterDialog(
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
                                 when (status) {
-                                    LearningStatus.NEW -> "Mới học"
-                                    LearningStatus.LEARNING -> "Đang học"
-                                    LearningStatus.MASTERED -> "Đã thuộc"
+                                    LearningStatus.NOT_LEARNED -> "Chưa học"
+                                    LearningStatus.LEARNED -> "Đã học"
                                 }
                             )
                         }

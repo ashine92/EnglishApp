@@ -118,8 +118,8 @@ fun HomeScreen(
             )
 
             StatCard(
-                title = "Đã thuộc",
-                value = statistics.masteredVocabs.toString(),
+                title = "Đã học",
+                value = statistics.learnedVocabs.toString(),
                 color = Color(0xFF4CAF50),
                 modifier = Modifier.weight(1f)
             )
@@ -132,8 +132,8 @@ fun HomeScreen(
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             StatCard(
-                title = "Đang học",
-                value = statistics.learningVocabs.toString(),
+                title = "Chưa học",
+                value = statistics.notLearnedVocabs.toString(),
                 color = Color(0xFFFFC107),
                 modifier = Modifier.weight(1f)
             )
@@ -164,21 +164,21 @@ fun HomeScreen(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 if (statistics.totalVocabs > 0) {
-                    val masteredProgress = statistics.masteredVocabs.toFloat() / statistics.totalVocabs
+                    val learnedProgress = statistics.learnedVocabs.toFloat() / statistics.totalVocabs
 
                     Column {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
-                            Text("Đã thuộc")
-                            Text("${(masteredProgress * 100).toInt()}%")
+                            Text("Đã học")
+                            Text("${(learnedProgress * 100).toInt()}%")
                         }
 
                         Spacer(modifier = Modifier.height(4.dp))
 
                         LinearProgressIndicator(
-                            progress = masteredProgress,
+                            progress = learnedProgress,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(8.dp),

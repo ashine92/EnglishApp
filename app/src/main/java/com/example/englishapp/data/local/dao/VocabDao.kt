@@ -38,4 +38,7 @@ interface VocabDao {
 
     @Query("UPDATE vocabulary SET wrongCount = wrongCount + 1, lastReviewDate = :date WHERE id = :id")
     suspend fun incrementWrongCount(id: Long, date: Long)
+
+    @Query("UPDATE vocabulary SET learningStatus = :status WHERE id = :id")
+    suspend fun updateLearningStatus(id: Long, status: String)
 }
