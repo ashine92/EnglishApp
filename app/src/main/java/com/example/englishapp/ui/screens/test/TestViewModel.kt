@@ -38,6 +38,12 @@ class TestViewModel(
                     _uiState.value = TestUiState.Error("Không có từ vựng nào để tạo bài kiểm tra")
                     return@launch
                 }
+                
+                // For matching test, require at least 10 words
+                if (testType == TestType.MATCHING && vocabs.size < 10) {
+                    _uiState.value = TestUiState.Error("Ghép từ - nghĩa yêu cầu ít nhất 10 từ vựng. Hiện tại bạn có ${vocabs.size} từ.")
+                    return@launch
+                }
 
                 currentQuestions = when (testType) {
                     TestType.MULTIPLE_CHOICE -> TestGenerator.generateMultipleChoiceQuestions(

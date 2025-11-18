@@ -486,22 +486,79 @@ fun MatchingQuestion(
     val meanings = remember(question.id) { question.pairs.map { it.second }.shuffled() }
 
     Column {
-        Text(
-            text = "Ghép từ với nghĩa tương ứng:",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
-        )
+        // Header
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.primaryContainer
+            )
+        ) {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = "Ghép từ với nghĩa tương ứng",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Chọn từ bên trái, sau đó chọn nghĩa bên phải",
+                    fontSize = 14.sp,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f),
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Progress indicator
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(bottom = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Đã ghép: ${selectedMatches.size}/${question.pairs.size}",
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.primary
+            )
+            
+            if (selectedMatches.isNotEmpty()) {
+                TextButton(onClick = { 
+                    selectedMatches = emptyMap()
+                    selectedWord = null
+                }) {
+                    Text("Làm lại")
+                }
+            }
+        }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Words column
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                Text(
+                    text = "Từ vựng",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                
                 words.forEach { word ->
                     MatchingItem(
                         text = word,
@@ -513,16 +570,22 @@ fun MatchingQuestion(
                             }
                         }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
 
-            Spacer(modifier = Modifier.width(16.dp))
-
             // Meanings column
             Column(
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
+                Text(
+                    text = "Nghĩa",
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.secondary,
+                    modifier = Modifier.padding(bottom = 4.dp)
+                )
+                
                 meanings.forEach { meaning ->
                     val isMatched = selectedMatches.containsValue(meaning)
                     MatchingItem(
@@ -538,7 +601,6 @@ fun MatchingQuestion(
                             }
                         }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
                 }
             }
         }
@@ -554,9 +616,19 @@ fun MatchingQuestion(
             enabled = selectedMatches.size == question.pairs.size,
             modifier = Modifier
                 .fillMaxWidth()
-                .height(56.dp)
+                .height(56.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary
+            )
         ) {
-            Text("Hoàn Thành (${selectedMatches.size}/${question.pairs.size})", fontSize = 18.sp)
+            Text(
+                text = if (selectedMatches.size == question.pairs.size) 
+                    "Hoàn thành ✓" 
+                else 
+                    "Hoàn thành (${selectedMatches.size}/${question.pairs.size})",
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold
+            )
         }
     }
 }
@@ -571,28 +643,60 @@ fun MatchingItem(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable(onClick = onClick, enabled = !isMatched)
-            .border(
-                width = if (isSelected) 2.dp else 1.dp,
-                color = when {
-                    isMatched -> Color.Green
-                    isSelected -> MaterialTheme.colorScheme.primary
-                    else -> Color.Gray
-                },
-                shape = RoundedCornerShape(8.dp)
-            ),
+            .clickable(onClick = onClick, enabled = !isMatched),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isSelected || isMatched) 4.dp else 2.dp
+        ),
         colors = CardDefaults.cardColors(
             containerColor = when {
-                isMatched -> Color.Green.copy(alpha = 0.2f)
+                isMatched -> Color(0xFF4CAF50).copy(alpha = 0.2f)
                 isSelected -> MaterialTheme.colorScheme.primaryContainer
                 else -> MaterialTheme.colorScheme.surface
             }
+        ),
+        border = androidx.compose.foundation.BorderStroke(
+            width = if (isSelected) 2.dp else if (isMatched) 2.dp else 1.dp,
+            color = when {
+                isMatched -> Color(0xFF4CAF50)
+                isSelected -> MaterialTheme.colorScheme.primary
+                else -> MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
+            }
         )
     ) {
-        Text(
-            text = text,
-            modifier = Modifier.padding(12.dp),
-            fontSize = 14.sp
-        )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = text,
+                fontSize = 15.sp,
+                fontWeight = if (isMatched || isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                color = when {
+                    isMatched -> Color(0xFF2E7D32)
+                    isSelected -> MaterialTheme.colorScheme.primary
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
+                modifier = Modifier.weight(1f)
+            )
+            
+            if (isMatched) {
+                Text(
+                    text = "✓",
+                    fontSize = 18.sp,
+                    color = Color(0xFF4CAF50),
+                    fontWeight = FontWeight.Bold
+                )
+            } else if (isSelected) {
+                Text(
+                    text = "→",
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                    fontWeight = FontWeight.Bold
+                )
+            }
+        }
     }
 }

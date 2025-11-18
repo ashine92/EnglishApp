@@ -3,13 +3,15 @@ package com.example.englishapp.ui.screens.flashcard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.englishapp.data.repository.FlashcardRepository
+import com.example.englishapp.data.repository.VocabRepository
 import com.example.englishapp.domain.model.Flashcard
 import com.example.englishapp.domain.model.Rating
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class FlashcardStudyViewModel(
-    private val flashcardRepository: FlashcardRepository
+    private val flashcardRepository: FlashcardRepository,
+    private val vocabRepository: VocabRepository
 ) : ViewModel() {
 
     private val _studyState = MutableStateFlow<StudyState>(StudyState.Loading)
@@ -70,6 +72,13 @@ class FlashcardStudyViewModel(
 
             // Submit rating to repository (updates spaced repetition)
             flashcardRepository.submitRating(currentCard.id, rating)
+            
+            // Update vocabulary learning status if associated with a vocab
+            currentCard.vocabId?.let { vocabId ->
+                // Consider GOOD and EASY as correct answers
+                val isCorrect = rating == Rating.GOOD || rating == Rating.EASY
+                vocabRepository.updateVocabReview(vocabId, isCorrect)
+            }
 
             // Move to next card
             moveToNextCard()
