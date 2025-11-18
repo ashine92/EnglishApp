@@ -253,7 +253,7 @@ data class FlashcardProgressEntity(
 
 ### Google Generative AI (Gemini)
 - **SDK**: `com.google.ai.client.generativeai:generativeai:0.1.2`
-- **Model**: `gemini-1.5-flash` (updated from deprecated `gemini-pro`)
+- **Model**: `gemini-1.5-pro` (updated from deprecated `gemini-pro`, using pro for better availability)
 - **Use Cases**:
   1. Word definitions and examples
   2. Pronunciation scoring
