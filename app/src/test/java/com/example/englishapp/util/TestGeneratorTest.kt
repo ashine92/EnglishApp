@@ -103,9 +103,9 @@ class TestGeneratorTest {
 
         assertEquals(5, questions.size)
         
-        // Each question should have 5 pairs
+        // Each question should have 3 pairs (changed from 5)
         questions.forEach { question ->
-            assertEquals(5, question.pairs.size)
+            assertEquals(3, question.pairs.size)
         }
 
         // Verify pairs contain word-meaning combinations
@@ -119,18 +119,18 @@ class TestGeneratorTest {
 
     @Test
     fun generateMatchingQuestions_recyclesVocabsWhenNotEnough() {
-        val vocabs = (1..3).map { i ->
+        val vocabs = (1..12).map { i ->  // At least 10 required, use 12
             createMockVocab(i.toLong(), "word$i", "meaning$i", "example$i")
         }
 
         val questions = TestGenerator.generateMatchingQuestions(vocabs, count = 5)
 
-        // Should create 5 questions even with only 3 vocabs
+        // Should create 5 questions
         assertEquals(5, questions.size)
         
-        // Each question should have pairs (recycled vocabs will be used)
+        // Each question should have 3 pairs
         questions.forEach { question ->
-            assertTrue(question.pairs.isNotEmpty())
+            assertEquals(3, question.pairs.size)
         }
     }
 
@@ -144,9 +144,9 @@ class TestGeneratorTest {
 
         // Should create exactly 3 questions as requested
         assertEquals(3, questions.size)
-        assertEquals(5, questions[0].pairs.size)
-        assertEquals(5, questions[1].pairs.size)
-        assertEquals(5, questions[2].pairs.size)
+        assertEquals(3, questions[0].pairs.size)
+        assertEquals(3, questions[1].pairs.size)
+        assertEquals(3, questions[2].pairs.size)
     }
 
     @Test
@@ -161,5 +161,30 @@ class TestGeneratorTest {
         assertEquals(ids.size, ids.toSet().size) // All IDs should be unique
         assertEquals("match_0", questions[0].id)
         assertEquals("match_1", questions[1].id)
+    }
+
+    @Test(expected = IllegalArgumentException::class)
+    fun generateMatchingQuestions_requiresMinimum10Vocabs() {
+        val vocabs = (1..9).map { i ->  // Only 9 vocabs, should fail
+            createMockVocab(i.toLong(), "word$i", "meaning$i", "example$i")
+        }
+
+        // Should throw IllegalArgumentException
+        TestGenerator.generateMatchingQuestions(vocabs, count = 5)
+    }
+
+    @Test
+    fun generateMatchingQuestions_worksWithExactly10Vocabs() {
+        val vocabs = (1..10).map { i ->  // Exactly 10 vocabs, minimum required
+            createMockVocab(i.toLong(), "word$i", "meaning$i", "example$i")
+        }
+
+        val questions = TestGenerator.generateMatchingQuestions(vocabs, count = 3)
+
+        // Should work with 10 vocabs
+        assertEquals(3, questions.size)
+        questions.forEach { question ->
+            assertEquals(3, question.pairs.size)
+        }
     }
 }

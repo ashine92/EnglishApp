@@ -69,6 +69,6 @@ val appModule = module {
     viewModel { VocabViewModel(get()) }
     viewModel { TestViewModel(get(), get()) }
     viewModel { FlashcardViewModel(get(), get()) }
-    viewModel { FlashcardStudyViewModel(get()) }
+    viewModel { FlashcardStudyViewModel(get(), get()) }
     viewModel { PronunciationViewModel(get(), get()) }
 }

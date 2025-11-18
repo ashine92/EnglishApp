@@ -11,7 +11,9 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -83,10 +85,13 @@ fun PronunciationScreen(
             )
         }
     ) { padding ->
+        val scrollState = rememberScrollState()
+        
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(scrollState)
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
@@ -127,6 +132,7 @@ fun PronunciationScreen(
                             )
                         }
                         
+                        // Only show Vietnamese meaning in practice card, not in results
                         Spacer(modifier = Modifier.height(8.dp))
                         
                         Text(
@@ -313,6 +319,8 @@ fun PronunciationResultCard(
     result: com.example.englishapp.domain.model.PronunciationResult,
     viewModel: PronunciationViewModel
 ) {
+    val currentWord = viewModel.currentWord.collectAsState().value
+    
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -323,6 +331,30 @@ fun PronunciationResultCard(
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Target Word - English only
+            currentWord?.let { vocab ->
+                Text(
+                    text = "Target Word",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = vocab.word,
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                vocab.phonetic?.let { phonetic ->
+                    Text(
+                        text = phonetic,
+                        fontSize = 14.sp,
+                        color = Color.Gray
+                    )
+                }
+            }
+            
+            Divider(modifier = Modifier.padding(vertical = 12.dp))
+            
             // Score
             Text(
                 text = "Score",

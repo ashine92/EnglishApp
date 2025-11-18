@@ -68,25 +68,29 @@ object TestGenerator {
         vocabs: List<Vocabulary>,
         count: Int = 10
     ): List<TestQuestion.Matching> {
-        val pairsPerQuestion = 5  // Số cặp từ mỗi câu hỏi
+        // Require at least 10 vocabs for matching test
+        if (vocabs.size < 10) {
+            throw IllegalArgumentException("Matching test requires at least 10 words. Currently have ${vocabs.size} words.")
+        }
+        
+        val wordsPerQuestion = 3  // Maximum 3 words per question (changed from 5)
         val shuffledVocabs = vocabs.shuffled()
 
         return (0 until count).mapNotNull { questionIndex ->
-            val startIndex = questionIndex * pairsPerQuestion
-            val endIndex = (startIndex + pairsPerQuestion).coerceAtMost(shuffledVocabs.size)
+            val startIndex = questionIndex * wordsPerQuestion
+            val endIndex = (startIndex + wordsPerQuestion).coerceAtMost(shuffledVocabs.size)
 
             if (startIndex >= shuffledVocabs.size) {
-                // Nếu hết từ, lặp lại từ đầu
-                val recycledVocabs = shuffledVocabs.shuffled().take(pairsPerQuestion)
+                // If we run out of words, recycle from the beginning
+                val recycledVocabs = shuffledVocabs.shuffled().take(wordsPerQuestion)
                 val pairs = recycledVocabs.map { vocab ->
                     vocab.word to vocab.meaning
                 }
 
-                // Store all vocabs, not just the first one
                 TestQuestion.Matching(
                     id = "match_$questionIndex",
                     vocab = recycledVocabs.first(),
-                    pairs = pairs, // Don't shuffle here, will be shuffled in UI
+                    pairs = pairs,
                     allVocabs = recycledVocabs
                 )
             } else {
@@ -97,11 +101,10 @@ object TestGenerator {
                     vocab.word to vocab.meaning
                 }
 
-                // Store all vocabs, not just the first one
                 TestQuestion.Matching(
                     id = "match_$questionIndex",
                     vocab = selectedVocabs.first(),
-                    pairs = pairs, // Don't shuffle here, will be shuffled in UI
+                    pairs = pairs,
                     allVocabs = selectedVocabs
                 )
             }
