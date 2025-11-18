@@ -99,7 +99,6 @@ class TestViewModel(
     fun submitMatchingAnswers(matches: Map<String, String>) {
         val currentQuestion = currentQuestions[currentQuestionIndex] as TestQuestion.Matching
         var correctMatches = 0
-        val wrongVocabsInMatching = mutableListOf<Long>()
 
         // Check each pair in the question
         currentQuestion.pairs.forEach { (word, correctMeaning) ->
@@ -108,25 +107,25 @@ class TestViewModel(
             
             if (isCorrect) {
                 correctMatches++
-            } else {
-                // Find the vocab ID for this word and add to wrong list
-                val vocab = currentQuestion.pairs.find { it.first == word }
-                if (vocab != null) {
-                    wrongVocabsInMatching.add(currentQuestion.vocab.id)
-                }
             }
             
-            // Update each vocab's review status
-            viewModelScope.launch {
-                vocabRepository.updateVocabReview(currentQuestion.vocab.id, isCorrect)
+            // Find the vocab for this word and update its status
+            val vocab = currentQuestion.allVocabs.find { it.word == word }
+            if (vocab != null) {
+                viewModelScope.launch {
+                    vocabRepository.updateVocabReview(vocab.id, isCorrect)
+                }
+                
+                // Track wrong answers
+                if (!isCorrect) {
+                    wrongVocabIds.add(vocab.id)
+                }
             }
         }
 
+        // Count the question as correct only if all pairs matched correctly
         if (correctMatches == currentQuestion.pairs.size) {
             correctAnswers++
-        } else {
-            // Add to wrong answers if not all pairs matched correctly
-            wrongVocabIds.add(currentQuestion.vocab.id)
         }
 
         moveToNextQuestion()
