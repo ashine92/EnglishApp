@@ -77,16 +77,33 @@ class PronunciationViewModel(
     fun loadWordById(vocabId: Long) {
         viewModelScope.launch {
             try {
-                val vocabs = _vocabularyList.value
-                val word = vocabs.find { it.id == vocabId }
-                if (word != null) {
-                    _currentWord.value = word
-                    _uiState.value = PronunciationUiState.Idle
+                // Đảm bảo danh sách từ vựng đã được load
+                if (_vocabularyList.value.isEmpty()) {
+                    // Load vocabulary list first if empty
+                    vocabRepository.getAllVocabs().collect { vocabs ->
+                        _vocabularyList.value = vocabs
+
+                        // Now find the word
+                        val word = vocabs.find { it.id == vocabId }
+                        if (word != null) {
+                            _currentWord.value = word
+                            _uiState.value = PronunciationUiState.Idle
+                        } else {
+                            _uiState.value = PronunciationUiState.Error("Từ vựng không tồn tại")
+                        }
+                    }
                 } else {
-                    _uiState.value = PronunciationUiState.Error("Word not found")
+                    // Find word in existing list
+                    val word = _vocabularyList.value.find { it.id == vocabId }
+                    if (word != null) {
+                        _currentWord.value = word
+                        _uiState.value = PronunciationUiState.Idle
+                    } else {
+                        _uiState.value = PronunciationUiState.Error("Từ vựng không tồn tại")
+                    }
                 }
             } catch (e: Exception) {
-                _uiState.value = PronunciationUiState.Error("Failed to load word: ${e.message}")
+                _uiState.value = PronunciationUiState.Error("Lỗi tải từ vựng: ${e.message}")
             }
         }
     }

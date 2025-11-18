@@ -28,6 +28,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.koin.androidx.compose.koinViewModel
 import java.util.*
+import androidx.compose.material.icons.filled.VolumeUp
+import android.content.Context
+import androidx.activity.result.ActivityResultLauncher
+import androidx.core.content.ContextCompat
+import android.content.pm.PackageManager
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -280,7 +286,7 @@ fun PronunciationScreen(
                     CircularProgressIndicator(modifier = Modifier.padding(16.dp))
                 }
                 is PronunciationUiState.Success -> {
-                    PronunciationResultCard(state.result, viewModel)
+                    PronunciationResultCard(state.result, viewModel, onNavigateBack)
                 }
                 is PronunciationUiState.Error -> {
                     Card(
@@ -317,7 +323,8 @@ fun PronunciationScreen(
 @Composable
 fun PronunciationResultCard(
     result: com.example.englishapp.domain.model.PronunciationResult,
-    viewModel: PronunciationViewModel
+    viewModel: PronunciationViewModel,
+    onNavigateBack: () -> Unit
 ) {
     val currentWord = viewModel.currentWord.collectAsState().value
     
@@ -453,26 +460,69 @@ private fun stopListening(
 }
 
 private fun createRecognitionListener(viewModel: PronunciationViewModel) = object : RecognitionListener {
-    override fun onReadyForSpeech(params: Bundle?) {}
-    override fun onBeginningOfSpeech() {}
+    override fun onReadyForSpeech(params: Bundle?) {
+        // Log để debug
+        android.util.Log.d("Speech", "Ready for speech")
+    }
+
+    override fun onBeginningOfSpeech() {
+        android.util.Log.d("Speech", "Beginning of speech")
+    }
+
     override fun onRmsChanged(rmsdB: Float) {}
     override fun onBufferReceived(buffer: ByteArray?) {}
+
     override fun onEndOfSpeech() {
         viewModel.setMicrophoneState(MicrophoneState.PROCESSING)
+        android.util.Log.d("Speech", "End of speech")
     }
 
     override fun onError(error: Int) {
+        android.util.Log.e("Speech", "Speech recognition error: $error")
         viewModel.setMicrophoneState(MicrophoneState.IDLE)
+        // Hiển thị lỗi cho user
+        viewModel.setRecognizedText("Speech recognition failed. Please try again.")
     }
 
     override fun onResults(results: Bundle?) {
         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+        android.util.Log.d("Speech", "Results: $matches")
+
         if (!matches.isNullOrEmpty()) {
-            viewModel.setRecognizedText(matches[0])
+            val recognizedText = matches[0]
+            viewModel.setRecognizedText(recognizedText)
+
+            // TỰ ĐỘNG CHẤM ĐIỂM sau khi nhận được kết quả
+            viewModel.scorePronunciation()
+        } else {
+            viewModel.setRecognizedText("No speech detected. Please try again.")
         }
         viewModel.setMicrophoneState(MicrophoneState.IDLE)
     }
 
-    override fun onPartialResults(partialResults: Bundle?) {}
+    override fun onPartialResults(partialResults: Bundle?) {
+        val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+        if (!matches.isNullOrEmpty()) {
+            android.util.Log.d("Speech", "Partial: ${matches[0]}")
+        }
+    }
+
     override fun onEvent(eventType: Int, params: Bundle?) {}
+}
+
+// Trong PronunciationScreen, thêm check permission
+private fun checkAndRequestPermission(
+    context: Context,
+    permissionLauncher: ActivityResultLauncher<String>
+): Boolean {
+    return if (ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.RECORD_AUDIO
+        ) == PackageManager.PERMISSION_GRANTED
+    ) {
+        true
+    } else {
+        permissionLauncher.launch(Manifest.permission.RECORD_AUDIO)
+        false
+    }
 }

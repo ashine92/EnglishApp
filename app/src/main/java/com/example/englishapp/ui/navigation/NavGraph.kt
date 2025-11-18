@@ -134,7 +134,7 @@ fun NavGraph() {
                         }
                     )
                 }
-            }
+
             }
         }
     ) { innerPadding ->

@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 import com.example.englishapp.domain.model.TestQuestion
 import com.example.englishapp.domain.model.TestType
 import org.koin.androidx.compose.koinViewModel
+import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
