@@ -2,7 +2,7 @@ package com.example.englishapp.data.repository
 
 import com.example.englishapp.data.local.dao.VocabDao
 import com.example.englishapp.data.local.entity.VocabEntity
-import com.example.englishapp.data.remote.DictionaryApi
+import com.example.englishapp.data.remote.GeminiWordLookupService
 import com.example.englishapp.domain.model.LearningStatus
 import com.example.englishapp.domain.model.Vocabulary
 import kotlinx.coroutines.flow.Flow
@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.map
 
 class VocabRepository(
     private val vocabDao: VocabDao,
-    private val dictionaryApi: DictionaryApi
+    private val geminiService: GeminiWordLookupService
 ) {
     fun getAllVocabs(): Flow<List<Vocabulary>> {
         return vocabDao.getAllVocabs().map { entities ->
@@ -40,26 +40,42 @@ class VocabRepository(
         return vocabDao.getRandomVocabs(limit).map { it.toDomain() }
     }
 
+    /**
+     * Search word online using Gemini API
+     */
     suspend fun searchWordOnline(word: String): Result<Vocabulary> {
         return try {
-            val response = dictionaryApi.searchWord(word)
-            if (response.isNotEmpty()) {
-                val data = response[0]
-                val meaning = data.meanings.firstOrNull()
-                val definition = meaning?.definitions?.firstOrNull()
-
-                Result.success(
-                    Vocabulary(
-                        word = data.word,
-                        phonetic = data.phonetic ?: data.phonetics?.firstOrNull()?.text,
-                        meaning = definition?.definition ?: "No definition found",
-                        example = definition?.example,
-                        partOfSpeech = meaning?.partOfSpeech,
-                        category = null  // ← THÊM DÒNG NÀY
-                    )
+            val result = geminiService.lookupWord(word)
+            result.map { response ->
+                Vocabulary(
+                    word = response.word,
+                    phonetic = response.phonetic,
+                    meaning = response.meaning,
+                    example = response.example,
+                    partOfSpeech = null, // Can be enhanced with Gemini to detect part of speech
+                    category = null
                 )
-            } else {
-                Result.failure(Exception("Word not found"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+    
+    /**
+     * Search word with specific English level (A1-C2)
+     */
+    suspend fun searchWordWithLevel(word: String, level: String): Result<Vocabulary> {
+        return try {
+            val result = geminiService.lookupWordWithLevel(word, level)
+            result.map { response ->
+                Vocabulary(
+                    word = response.word,
+                    phonetic = response.phonetic,
+                    meaning = response.meaning,
+                    example = response.example,
+                    partOfSpeech = null,
+                    category = null
+                )
             }
         } catch (e: Exception) {
             Result.failure(e)

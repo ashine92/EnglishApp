@@ -19,7 +19,8 @@ fun HomeScreen(
     viewModel: HomeViewModel = koinViewModel(),
     onNavigateToSearch: () -> Unit,
     onNavigateToVocabList: () -> Unit,
-    onNavigateToTest: () -> Unit
+    onNavigateToTest: () -> Unit,
+    onNavigateToPronunciation: () -> Unit = {}
 ) {
     val statistics by viewModel.statistics.collectAsState()
 
@@ -72,6 +73,15 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Text("✏️ Làm bài kiểm tra")
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                OutlinedButton(
+                    onClick = onNavigateToPronunciation,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("🎤 Luyện phát âm")
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
