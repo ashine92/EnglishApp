@@ -21,6 +21,7 @@ sealed class TestQuestion {
     data class Matching(
         override val id: String,
         override val vocab: Vocabulary,
-        val pairs: List<Pair<String, String>>
+        val pairs: List<Pair<String, String>>,
+        val allVocabs: List<Vocabulary> = emptyList() // All vocabs in this matching question
     ) : TestQuestion()
 }

@@ -15,7 +15,7 @@ import com.example.englishapp.data.local.entity.*
         FlashcardEntity::class,
         FlashcardProgressEntity::class
     ],
-    version = 2,  // Tăng version từ 1 lên 2
+    version = 3,  // Increased from 2 to 3 for learning status migration
     exportSchema = false
 )
 abstract class VocabDatabase : RoomDatabase() {

@@ -34,9 +34,8 @@ class HomeViewModel(
 
                 _statistics.value = Statistics(
                     totalVocabs = vocabs.size,
-                    newVocabs = vocabs.count { it.learningStatus == LearningStatus.NEW },
-                    learningVocabs = vocabs.count { it.learningStatus == LearningStatus.LEARNING },
-                    masteredVocabs = vocabs.count { it.learningStatus == LearningStatus.MASTERED },
+                    notLearnedVocabs = vocabs.count { it.learningStatus == LearningStatus.NOT_LEARNED },
+                    learnedVocabs = vocabs.count { it.learningStatus == LearningStatus.LEARNED },
                     averageScore = averageScore
                 )
             }
@@ -50,8 +49,7 @@ class HomeViewModel(
 
 data class Statistics(
     val totalVocabs: Int = 0,
-    val newVocabs: Int = 0,
-    val learningVocabs: Int = 0,
-    val masteredVocabs: Int = 0,
+    val notLearnedVocabs: Int = 0,
+    val learnedVocabs: Int = 0,
     val averageScore: Float = 0f
 )

@@ -82,10 +82,12 @@ object TestGenerator {
                     vocab.word to vocab.meaning
                 }
 
+                // Store all vocabs, not just the first one
                 TestQuestion.Matching(
                     id = "match_$questionIndex",
                     vocab = recycledVocabs.first(),
-                    pairs = pairs.shuffled()
+                    pairs = pairs, // Don't shuffle here, will be shuffled in UI
+                    allVocabs = recycledVocabs
                 )
             } else {
                 val selectedVocabs = shuffledVocabs.subList(startIndex, endIndex)
@@ -95,10 +97,12 @@ object TestGenerator {
                     vocab.word to vocab.meaning
                 }
 
+                // Store all vocabs, not just the first one
                 TestQuestion.Matching(
                     id = "match_$questionIndex",
                     vocab = selectedVocabs.first(),
-                    pairs = pairs.shuffled()
+                    pairs = pairs, // Don't shuffle here, will be shuffled in UI
+                    allVocabs = selectedVocabs
                 )
             }
         }
