@@ -33,9 +33,10 @@ fun NavGraph() {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
     
-    // Ẩn bottom bar khi ở Test screen hoặc Flashcard study screen
+    // Ẩn bottom bar khi ở Test screen hoặc Flashcard study screen hoặc Pronunciation screen
     val shouldShowBottomBar = currentDestination?.route != Screen.Test.route &&
-            currentDestination?.route?.startsWith("flashcard_study") != true
+            currentDestination?.route?.startsWith("flashcard_study") != true &&
+            currentDestination?.route != Screen.Pronunciation.route
 
     var showCreateDeckDialog by remember { mutableStateOf(false) }
 
@@ -149,6 +150,9 @@ fun NavGraph() {
                     },
                     onNavigateToTest = {
                         navController.navigate(Screen.Test.route)
+                    },
+                    onNavigateToPronunciation = {
+                        navController.navigate(Screen.Pronunciation.route)
                     }
                 )
             }
@@ -167,6 +171,15 @@ fun NavGraph() {
 
             composable(Screen.Test.route) {
                 TestScreen(
+                    onNavigateBack = {
+                        navController.popBackStack()
+                    }
+                )
+            }
+            
+            // Pronunciation Screen
+            composable(Screen.Pronunciation.route) {
+                com.example.englishapp.ui.screens.pronunciation.PronunciationScreen(
                     onNavigateBack = {
                         navController.popBackStack()
                     }

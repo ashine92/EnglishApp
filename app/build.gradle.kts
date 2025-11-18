@@ -68,5 +68,9 @@ dependencies {
     // Koin for DI
     implementation("io.insert-koin:koin-androidx-compose:3.5.3")
     implementation("io.insert-koin:koin-android:3.5.0")
+    
+    // Google Generative AI (Gemini)
+    implementation("com.google.ai.client.generativeai:generativeai:0.1.2")
+    
     debugImplementation("androidx.compose.ui:ui-tooling")
 }
