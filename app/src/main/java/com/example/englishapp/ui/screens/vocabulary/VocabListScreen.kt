@@ -24,8 +24,12 @@ fun VocabListScreen(
 ) {
     val vocabList by viewModel.vocabList.collectAsState()
     val filterStatus by viewModel.filterStatus.collectAsState()
+    val syncStatus by viewModel.syncStatus.collectAsState()
+    val unlearnedCount by viewModel.unlearnedVocabCount.collectAsState()
+    
     var showFilterDialog by remember { mutableStateOf(false) }
     var searchQuery by remember { mutableStateOf("") }
+    var showSyncDialog by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier.fillMaxSize()
@@ -81,13 +85,37 @@ fun VocabListScreen(
             }
         }
 
-        // Vocab count
-        Text(
-            text = "Tổng: ${vocabList.size} từ",
-            modifier = Modifier.padding(horizontal = 16.dp),
-            fontSize = 14.sp,
-            color = Color.Gray
-        )
+        // Vocab count and Firebase sync button
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = "Tổng: ${vocabList.size} từ",
+                    fontSize = 14.sp,
+                    color = Color.Gray
+                )
+                Text(
+                    text = "Chưa học: $unlearnedCount từ",
+                    fontSize = 12.sp,
+                    color = Color(0xFFFFC107)
+                )
+            }
+
+            Button(
+                onClick = { showSyncDialog = true },
+                enabled = unlearnedCount > 0,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF4CAF50)
+                )
+            ) {
+                Text("🔄 Sync Firebase")
+            }
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -132,6 +160,20 @@ fun VocabListScreen(
             onStatusSelected = { status ->
                 viewModel.filterByStatus(status)
                 showFilterDialog = false
+            }
+        )
+    }
+
+    if (showSyncDialog) {
+        FirebaseSyncDialog(
+            unlearnedCount = unlearnedCount,
+            syncStatus = syncStatus,
+            onDismiss = {
+                showSyncDialog = false
+                viewModel.resetSyncStatus()
+            },
+            onConfirm = {
+                viewModel.syncToFirebase()
             }
         )
     }
@@ -365,6 +407,99 @@ fun StatusFilterDialog(
         confirmButton = {
             TextButton(onClick = onDismiss) {
                 Text("Đóng")
+            }
+        }
+    )
+}
+
+@Composable
+fun FirebaseSyncDialog(
+    unlearnedCount: Int,
+    syncStatus: SyncStatus,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("🔄 Đồng bộ Firebase") },
+        text = {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                when (syncStatus) {
+                    is SyncStatus.Idle -> {
+                        Text(
+                            text = "Bạn có muốn đồng bộ $unlearnedCount từ chưa học lên Firebase?",
+                            fontSize = 14.sp
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "ESP32 sẽ hiển thị các từ này trên màn hình LCD.",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                    is SyncStatus.Loading -> {
+                        CircularProgressIndicator()
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text("Đang đồng bộ...")
+                    }
+                    is SyncStatus.Success -> {
+                        Text(
+                            text = "✅ Đã đồng bộ ${syncStatus.count} từ thành công!",
+                            color = Color(0xFF4CAF50),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "ESP32 có thể đọc dữ liệu từ Firebase ngay bây giờ.",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                    is SyncStatus.Error -> {
+                        Text(
+                            text = "❌ Lỗi: ${syncStatus.message}",
+                            color = Color.Red
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = "Vui lòng kiểm tra kết nối Internet và thử lại.",
+                            fontSize = 12.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+        },
+        confirmButton = {
+            when (syncStatus) {
+                is SyncStatus.Idle -> {
+                    Button(
+                        onClick = onConfirm,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF4CAF50)
+                        )
+                    ) {
+                        Text("Đồng bộ")
+                    }
+                }
+                is SyncStatus.Success, is SyncStatus.Error -> {
+                    Button(onClick = onDismiss) {
+                        Text("Đóng")
+                    }
+                }
+                is SyncStatus.Loading -> {
+                    // Không hiển thị nút khi đang loading
+                }
+            }
+        },
+        dismissButton = {
+            if (syncStatus is SyncStatus.Idle) {
+                TextButton(onClick = onDismiss) {
+                    Text("Hủy")
+                }
             }
         }
     )

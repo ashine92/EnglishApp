@@ -2,6 +2,7 @@ plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
     id("com.google.devtools.ksp")
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -73,6 +74,10 @@ dependencies {
     
     // Google Generative AI (Gemini)
     implementation("com.google.ai.client.generativeai:generativeai:0.1.2")
+    
+    // Firebase
+    implementation(platform("com.google.firebase:firebase-bom:32.7.0"))
+    implementation("com.google.firebase:firebase-database-ktx")
     
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

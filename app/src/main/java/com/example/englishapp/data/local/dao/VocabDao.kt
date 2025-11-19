@@ -41,4 +41,8 @@ interface VocabDao {
 
     @Query("UPDATE vocabulary SET learningStatus = :status WHERE id = :id")
     suspend fun updateLearningStatus(id: Long, status: String)
+
+    // Query để lấy tất cả từ chưa học (cho Firebase sync)
+    @Query("SELECT * FROM vocabulary WHERE learningStatus = 'NOT_LEARNED' ORDER BY createdDate ASC")
+    fun getUnlearnedVocabs(): Flow<List<VocabEntity>>
 }

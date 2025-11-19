@@ -5,15 +5,31 @@ import com.example.englishapp.data.local.entity.VocabEntity
 import com.example.englishapp.data.remote.GeminiWordLookupService
 import com.example.englishapp.domain.model.LearningStatus
 import com.example.englishapp.domain.model.Vocabulary
+import com.google.firebase.database.FirebaseDatabase
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.tasks.await
 
 class VocabRepository(
     private val vocabDao: VocabDao,
     private val geminiService: GeminiWordLookupService
 ) {
+    // Firebase Database reference
+    private val firebaseDatabase = FirebaseDatabase.getInstance()
+    private val unlearnedWordsRef = firebaseDatabase.getReference("unlearnedWords")
+
     fun getAllVocabs(): Flow<List<Vocabulary>> {
         return vocabDao.getAllVocabs().map { entities ->
+            entities.map { it.toDomain() }
+        }
+    }
+
+    /**
+     * Lấy danh sách từ chưa học (NOT_LEARNED)
+     */
+    fun getUnlearnedVocabs(): Flow<List<Vocabulary>> {
+        return vocabDao.getUnlearnedVocabs().map { entities ->
             entities.map { it.toDomain() }
         }
     }
@@ -104,6 +120,52 @@ class VocabRepository(
             vocabDao.incrementWrongCount(vocabId, currentTime)
             // Keep as not learned when answered incorrectly
             vocabDao.updateLearningStatus(vocabId, LearningStatus.NOT_LEARNED.name)
+        }
+    }
+
+    /**
+     * Đồng bộ tất cả từ chưa học lên Firebase Realtime Database
+     * ESP32 sẽ đọc dữ liệu từ Firebase và hiển thị trên LCD
+     */
+    suspend fun syncUnlearnedVocabsToFirebase(): Result<Int> {
+        return try {
+            // Lấy tất cả từ chưa học từ database
+            val unlearnedVocabs = vocabDao.getUnlearnedVocabs().first()
+            
+            if (unlearnedVocabs.isEmpty()) {
+                return Result.success(0)
+            }
+
+            // Tạo map để gửi lên Firebase
+            val vocabsMap = unlearnedVocabs.mapIndexed { index, vocab ->
+                index.toString() to mapOf(
+                    "word" to vocab.word,
+                    "phonetic" to (vocab.phonetic ?: ""),
+                    "meaning" to vocab.meaning,
+                    "example" to (vocab.example ?: ""),
+                    "category" to (vocab.category ?: ""),
+                    "createdDate" to vocab.createdDate
+                )
+            }.toMap()
+
+            // Gửi lên Firebase (ghi đè toàn bộ danh sách)
+            unlearnedWordsRef.setValue(vocabsMap).await()
+            
+            Result.success(unlearnedVocabs.size)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Xóa tất cả từ vựng trên Firebase (dùng khi cần reset)
+     */
+    suspend fun clearFirebaseVocabs(): Result<Unit> {
+        return try {
+            unlearnedWordsRef.removeValue().await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
         }
     }
 
