@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface VocabDao {
+    // Code cũ
     @Query("SELECT * FROM vocabulary ORDER BY createdDate DESC")
     fun getAllVocabs(): Flow<List<VocabEntity>>
 
@@ -41,4 +42,11 @@ interface VocabDao {
 
     @Query("UPDATE vocabulary SET learningStatus = :status WHERE id = :id")
     suspend fun updateLearningStatus(id: Long, status: String)
+
+    // Code mới: Thêm query để lấy tất cả từ chưa thuộc (NOT_LEARNED), sắp xếp theo ngày tạo
+    // Lý do: Để dễ dàng gọi trực tiếp mà không cần truyền tham số, và đảm bảo thứ tự (từ cũ đến mới)
+    @Query("SELECT * FROM vocabulary WHERE learningStatus = 'NOT_LEARNED' ORDER BY createdDate ASC")
+    fun getUnlearnedVocabs(): Flow<List<VocabEntity>>
+
+
 }
