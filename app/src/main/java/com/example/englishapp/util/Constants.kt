@@ -6,7 +6,7 @@ object Constants {
     
     // Gemini API - API key should be provided by user or stored securely
     // For development, you can set this in local.properties or environment variable
-    const val GEMINI_API_KEY = "AIzaSyBcYRHwip-CmFIBWjf-lQB4Lt55LMgs81Q" // Replace with actual key or use BuildConfig
+    const val GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE" // Replace with your actual key from https://makersuite.google.com/app/apikey
 
     // Test settings
     const val DEFAULT_QUESTION_COUNT = 10
