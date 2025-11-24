@@ -403,14 +403,14 @@ cd EnglishApp
    ```
    Thành:
    ```kotlin
-   const val GEMINI_API_KEY = "AIza...your_actual_key"
+   const val GEMINI_API_KEY = "your_actual_api_key"  // Paste your key here
    ```
 
 #### Cách 2: Sử dụng local.properties (Bảo mật hơn)
 1. Tạo/mở file `local.properties` (ở thư mục gốc)
 2. Thêm dòng:
    ```properties
-   GEMINI_API_KEY=AIza...your_actual_key
+   GEMINI_API_KEY=your_actual_api_key
    ```
 3. Cập nhật `app/build.gradle.kts`:
    ```kotlin
@@ -572,10 +572,12 @@ Tests bao gồm:
 ## 📊 API Costs & Limits
 
 ### Gemini API (Free Tier)
-- **Requests per minute:** 60 RPM
-- **Requests per day:** 1,500 RPD
-- **Tokens per minute:** 32,000 TPM
+
+**Note:** Các giới hạn dưới đây có thể thay đổi. Vui lòng kiểm tra tại [Google AI Pricing](https://ai.google.dev/pricing) để biết thông tin mới nhất.
+
 - **Model:** gemini-2.5-flash
+- **Free tier có giới hạn về:** Requests per minute (RPM), Requests per day (RPD), Tokens per minute (TPM)
+- **Chi tiết chính xác:** Xem tại Google AI Studio
 
 **💡 Mẹo tiết kiệm:**
 - Cache kết quả tra từ phổ biến
