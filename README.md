@@ -390,11 +390,13 @@ git clone https://github.com/ashine92/EnglishApp.git
 cd EnglishApp
 ```
 
-### 2️⃣ ⭐ Cấu hình Gemini API Key (QUAN TRỌNG)
+### 2️⃣ ⭐ Cấu hình API Keys (QUAN TRỌNG)
 
-Đây là bước **bắt buộc** để ứng dụng hoạt động!
+Đây là các bước **bắt buộc** để ứng dụng hoạt động!
 
-#### Cách 1: Sửa trực tiếp trong Constants.kt (Đơn giản)
+#### A. Cấu hình Gemini API Key
+
+##### Cách 1: Sửa trực tiếp trong Constants.kt (Đơn giản)
 1. Lấy API key tại: **https://makersuite.google.com/app/apikey**
 2. Mở file: `app/src/main/java/com/example/englishapp/util/Constants.kt`
 3. Thay thế:
@@ -406,7 +408,7 @@ cd EnglishApp
    const val GEMINI_API_KEY = "your_actual_api_key"  // Paste your key here
    ```
 
-#### Cách 2: Sử dụng local.properties (Bảo mật hơn)
+##### Cách 2: Sử dụng local.properties (Bảo mật hơn - Khuyến nghị)
 1. Tạo/mở file `local.properties` (ở thư mục gốc)
 2. Thêm dòng:
    ```properties
@@ -429,7 +431,22 @@ cd EnglishApp
    const val GEMINI_API_KEY = BuildConfig.GEMINI_API_KEY
    ```
 
-⚠️ **Lưu ý:** API key miễn phí có giới hạn. Xem tại [Google AI Studio](https://ai.google.dev/pricing)
+#### B. Cấu hình Firebase (google-services.json)
+
+1. Tạo Firebase project tại: **https://console.firebase.google.com/**
+2. Thêm Android app với package name: `com.example.englishapp`
+3. Download file `google-services.json`
+4. Copy file vào: `app/google-services.json`
+5. Hoặc đổi tên file mẫu:
+   ```bash
+   cp app/google-services.json.example app/google-services.json
+   ```
+   Sau đó cập nhật các giá trị trong file với thông tin từ Firebase Console
+
+⚠️ **Lưu ý bảo mật:**
+- **KHÔNG** commit file `google-services.json` lên git (đã được thêm vào .gitignore)
+- **KHÔNG** chia sẻ API keys công khai
+- API key miễn phí có giới hạn. Xem tại [Google AI Studio](https://ai.google.dev/pricing)
 
 ### 3️⃣ Build & Run
 
@@ -592,10 +609,18 @@ Tests bao gồm:
 
 ### API Key Security
 ⚠️ **Quan trọng:**
-- KHÔNG commit API key lên GitHub
-- Sử dụng `local.properties` hoặc environment variables
-- Rotate key định kỳ
-- Monitor usage tại Google AI Studio
+- **KHÔNG bao giờ** commit API keys hoặc file `google-services.json` lên GitHub
+- Sử dụng `local.properties` hoặc environment variables để lưu API keys
+- File `google-services.json` đã được thêm vào `.gitignore`
+- Rotate key định kỳ nếu bị lộ
+- Monitor usage tại Google AI Studio và Firebase Console
+- Nếu phát hiện key bị lộ, revoke ngay lập tức và tạo key mới
+
+**Nếu bạn đã vô tình commit API keys:**
+1. Revoke key cũ tại console (Gemini hoặc Firebase)
+2. Tạo key mới
+3. Cập nhật key mới trong `local.properties` hoặc `Constants.kt`
+4. **KHÔNG** xóa commit cũ (git history vẫn chứa key)
 
 ### Data Privacy
 - ✅ Tất cả dữ liệu lưu local (Room Database)
